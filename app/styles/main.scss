@@ -1,0 +1,19 @@
+.main {
+  .wrapper {
+    min-height: calc(100vh - 114px);
+    padding: 38px 0 0 0;
+    
+    @media (max-width: 768px) {
+      padding: 38px 15px;
+    }
+  }
+
+  .logop {
+    padding: 10px 0;
+    width: 150px;
+  }
+
+  .navbar {
+    margin-bottom: 0;
+  }
+}

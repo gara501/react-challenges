@@ -1,0 +1,23 @@
+.applications {
+  .home {
+    .grid {
+      margin-top: 20px;
+      .card {
+        span.date {
+          display: block;
+          font-size: .9rem;
+          font-style: italic;
+          margin-top: 5px;
+          position: relative;
+        }
+
+        .award {
+          bottom: 5px;
+          position: absolute;
+          right: 5px;
+          width: 20%;
+        } 
+      }
+    }
+  }
+}
