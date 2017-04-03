@@ -1,78 +1,178 @@
 var React = require('react');
 var applicationsStyles = require('../styles/applications.scss');
 
-var Applications = React.createClass({
-  render: function() {
+class Applications extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      challenge: null,
+      explanation: '',
+      solutionURL: ''
+    };
+
+    this.handleSolutionChange = this.handleSolutionChange.bind(this);
+    this.addSolution = this.addSolution.bind(this);
+  }
+
+  addSolution() {
+    if (!this.state.user) {
+      location.hash = '/';
+    }
+
+    fetch('/api/solution',
+      {
+        method: 'post',
+        credentials: 'include',
+        headers: {
+          'Content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          challenge: this.state.challenge.id,
+          type: 'solution',
+          url: this.state.solutionURL,
+          user: this.state.user.username,
+          avatar: this.state.user._json.avatar_url,
+          name: this.state.user._json.name
+        })
+      })
+      .then((response) => {
+        this.getChallenge(this.state.challenge.id).then((response) => {
+          this.updateChallenge(response);
+        });
+      });
+  }
+
+  getUser() {
+    return fetch('/api/user', { credentials: 'include' }).
+      then(response => response.json()).
+      then((json) => {
+        return json.user;
+      });
+  }
+
+  getChallenge(id) {
+    return fetch('/graphql?',
+      {
+        method: 'post',
+        headers: {
+          'Content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          query: '{ challenges(id: "' + id +
+            '") { id, title, description, icon, start, end, explanation, solutions { ' +
+            'url, user, name, avatar, date } } }'
+        })
+      })
+      .then(response => response.json());
+  }
+
+  getExplanation(challenge) {
+    return fetch(challenge.explanation)
+      .then((response) => response.text())
+      .then((text) => text);
+  }
+
+  formatDate(stringDate) {
+    const options = {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    };
+
+    const date = new Date(stringDate);
+
+    return date.toLocaleDateString(navigator.language, options);
+  }
+
+  handleSolutionChange(event) {
+    this.setState({
+      solutionURL: event.target.value
+    });
+  }
+
+  updateChallenge(response) {
+    if (response.data && response.data.challenges) {
+      this.setState({
+        challenge: response.data.challenges[0]
+      });
+
+      this.getExplanation(response.data.challenges[0]).then((html) => {
+        this.setState({
+          explanation: html
+        });
+      });
+    }
+  }
+
+  componentDidMount() {
+    const id = this.props.params.id.slice(1);
+
+    this.getUser().then((user) => {
+      this.setState({
+        user
+      });
+    });
+
+    this.getChallenge(id).then((response) => {
+      this.updateChallenge(response);
+    });
+  }
+
+  createMarkup(html) {
+    return {__html: html};
+  }
+
+  render() {
+    if (!this.state.challenge) {
+      return false;
+    }
+
+    const solutions = this.state.challenge.solutions.map((solution) =>
+      <div className="card" key={ solution.url }>
+        <a href={ solution.url }>
+          <img src={ solution.avatar } alt="challenge" />
+          <span className="date">Sent { this.formatDate(solution.date) }</span>
+          <h5>{ solution.name }</h5>
+        </a>
+      </div>
+    );
+
     return (
       <div className="applications">
-        <h1>Basic Layout</h1>
+        <h1>{ this.state.challenge.title } - { this.state.challenge.description }</h1>
+
         <div className="dates">
-          <p>Created on: February 01 2017</p>
-          <p>Open Until: March 01 2017</p>
+          <p>Created on: { this.formatDate(this.state.challenge.start) }</p>
+          <p>Open Until: { this.formatDate(this.state.challenge.end) }</p>
         </div>
-        <p>This challenge is about a simple layout, use your knowledge to construct a basic layout, this layout should have 5 sections</p>
-        <ul>
-          <li>Header</li>
-          <li>Footer</li>
-          <li>Content</li>
-          <li>Lateral Menu (aside)</li>
-        </ul>
-        <p>The layout must be responsive in 3 breakpoints, mobile, tablet and Desktop (340px, 768px, 1200px)</p>
+
+        <div dangerouslySetInnerHTML={ this.createMarkup(this.state.explanation) }></div>
+
         <div className="form">
           <div className="form-group open-challenge">
             <label htmlFor="repo">Repo URL</label>
-            <input type="text" className="form-control" id="repo" placeholder="Repo URL" />
+
+            <input type="text" className="form-control" id="repo" placeholder="Repo URL"
+                   value={ this.state.solutionURL }
+                   onChange={ this.handleSolutionChange }/>
           </div>
-          <button type="button" className="btn btn-default">Send my Repo</button>
+
+          <button type="button" className="btn btn-default"
+                  disabled={ !this.state.solutionURL }
+                  onClick={ this.addSolution }>Send my Repo</button>
         </div>
-        <h3>Participants</h3>
+
+        <h3>{ this.state.challenge.solutions.length ? 'Participants': '' }</h3>
+
         <div className="home">
           <div className="grid">
-            <div className="card second">
-                <a href="http://github.com/gara501">
-                  <img src="https://avatars3.githubusercontent.com/u/1091674?v=3&s=460" alt="callenge" />
-                  <span className="date">Sent 2017/03/02 02:20 PM </span>
-                  <h5>John Doe</h5>
-                  <p>Second Place</p>
-                </a>
-                <img className="award" src="images/second.png" alt="callenge" />
-            </div>
-            <div className="card first">
-                <a href="http://github.com/gara501">
-                  <img src="https://avatars3.githubusercontent.com/u/1091674?v=3&s=460" alt="callenge" />
-                  <span className="date">Sent 2017/03/02 02:20 PM </span>
-                  <h5>John Doe</h5>
-                  <p>First Place</p>
-                </a>
-                <img className="award" src="images/first.png" alt="callenge" />
-            </div>
-            <div className="card third">
-                <a href="http://github.com/gara501">
-                  <img src="https://avatars3.githubusercontent.com/u/1091674?v=3&s=460" alt="callenge" />
-                  <span className="date">Sent 2017/03/02 02:20 PM </span>
-                  <h5>John Doe</h5>
-                  <p>Third Place</p>
-                </a>
-                <img className="award" src="images/third.png" alt="callenge" />
-            </div>
-            <div className="card ">
-                <a href="http://github.com/gara501">
-                <img src="https://avatars3.githubusercontent.com/u/1091674?v=3&s=460" alt="callenge" />
-                <span className="date">Sent 2017/03/02 02:20 PM </span>
-                <h5>John Doe</h5>
-                </a>
-            </div>
-            <div className="card">
-                <a href="">
-                <img src="images/svg/wrench.svg" alt="callenge" />
-                <h5>John Doe</h5>
-                </a>
-            </div>
+            { solutions }
           </div>
         </div>
       </div>
     )
   }
-});
+}
 
 module.exports = Applications;

@@ -2,13 +2,15 @@ var React = require('react');
 var mainStyles = require('../styles/main.scss');
 var Footer = require('./Footer.js');
 
-var Main = React.createClass({
-  render: function() {
+class Main extends React.Component {
+  render() {
     return (
       <div className="main main-container">
         <nav className="navbar navbar-default" role="navigation">
           <div className="container">
-            <img className="logop" src="/dist/images/logo.png" alt="prodigious" />
+            <a href="/">
+              <img className="logop" src="/dist/images/logo.png" alt="prodigious" />
+            </a>
           </div>
         </nav>
         <div className="wrapper container">
@@ -18,6 +20,6 @@ var Main = React.createClass({
       </div>
     )
   }
-});
+}
 
 module.exports = Main;

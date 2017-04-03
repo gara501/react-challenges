@@ -4,12 +4,10 @@ const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
-  //entry: "./app/App.js",
   entry: [
-    "webpack-dev-server/client?http://localhost:8081",
-    "webpack/hot/only-dev-server",
     "./app/App.js"
   ],
+  devtool: 'source-map',
   output: {
     path: path.resolve(__dirname, './dist'),
     filename: 'app.bundle.js',
@@ -20,7 +18,7 @@ module.exports = {
       test: /\.js$/,
       use: [{
         loader: 'react-hot-loader'
-      }, 
+      },
       {
         loader: 'babel-loader',
         options: {
@@ -50,9 +48,6 @@ module.exports = {
     new webpack.HotModuleReplacementPlugin(),
     new HtmlWebpackPlugin({
       title: 'Challenges',
-      minify: {
-        // collapseWhitespace: true
-      },
       hash: true,
       template: './app/index.html'
     }),
@@ -60,5 +55,12 @@ module.exports = {
       filename: 'app.css',
       allChunks: true
     })
-  ]
+  ],
+  devServer: {
+    proxy: {
+      "/api": "http://localhost:3000",
+      "/auth": "http://localhost:3000",
+      "/graphql": "http://localhost:3000"
+    }
+  }
 }
